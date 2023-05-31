@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Models\Posts;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -22,10 +24,14 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::group(['prefix' => 'v1'], function () {
     Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/login/email', [AuthController::class, 'loginWithEmail']);
+    Route::post('/register', [AuthController::class, 'register']);
 
     Route::group(['middleware' => ['auth:sanctum']], function () {
-        Route::get('/user/scope', [UserController::class, 'scope']);
-        Route::resource('user', '\App\Http\Controllers\UserController');
+        // users
+        Route::get('/users/scope', [UserController::class, 'scope']);
+        Route::apiResource('users', 'App\Http\Controllers\UserController');
+
+        // posts
+        Route::get('/posts/search', [UserController::class, 'search']);
     });
 });

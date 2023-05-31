@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\User\UserRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -18,47 +18,46 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
-        $credentials = request(['email', 'password']);
+        $user = User::where('email', $request->email)->first();
 
-        if (!Auth::attempt($credentials)) {
+        if (!$user) {
             return response()->json([
                 'status_code' => 500,
-                'message' => 'Unauthorized'
-            ]);
+                'message' => 'Invalid Email.'
+            ], 401);
         }
-
-        $user = User::where('email', $request->email)->first();
 
         if (!Hash::check($request->password, $user->password, [])) {
-            throw new \Exception('Error in Login');
+            return response()->json([
+                'status_code' => 500,
+                'message' => 'Invalid Password.'
+            ], 401);
         }
 
-        $tokenResult = $user->createToken('authToken', ['user', 'admin'])->plainTextToken;
+        $tokenResult = $user->createToken('authToken', ['USER'])->plainTextToken;
 
         return response()->json([
             'status_code' => 200,
             'access_token' => $tokenResult,
             'token_type' => 'Bearer',
-        ]);
+        ], 200);
     }
 
-    public function loginWithEmail(Request $request)
+    public function register(UserRequest $request)
     {
-        $request->validate([
-            'email' => 'email|required',
-        ]);
 
-        $user = User::where('email', $request->email)->first();
+        $payload = $request->validated();
 
-        auth()->loginUsingId($user->id);
+        $payload['password'] = Hash::make($payload['password']);
 
-        $tokenResult = $user->createToken('authToken', ['user', 'admin'])->plainTextToken;
+        $user = User::create($payload);
+
+        $tokenResult = $user->createToken('authToken', ['USER'])->plainTextToken;
 
         return response()->json([
             'status_code' => 200,
             'access_token' => $tokenResult,
             'token_type' => 'Bearer',
-        ]);
-
+        ], 201);
     }
 }

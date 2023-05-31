@@ -1,28 +1,63 @@
 version: "3.8"
 services:
-  db:
-    image: mysql:5.7
-    platform: linux/amd64
-    container_name: db
-    restart: unless-stopped
-    tty: true
-    ports:
-      - "3306:3306"
-    environment:
-      MYSQL_DATABASE: thoaiky1992
-      MYSQL_USER: thoaiky1992
-      MYSQL_PASSWORD: thoaiky1992
-      MYSQL_ROOT_PASSWORD: thoaiky1992
-      SERVICE_TAGS: dev
-      SERVICE_NAME: mysql
-    volumes:
-      - ./dbdata:/var/lib/mysql
-    networks:
-      - shop-network
+    #PHP service
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: php_app
+        container_name: app
+        restart: unless-stopped
+        tty: true
+        environment:
+            SERVICE_NAME: app
+            SERVICE_TAGS: dev
+        working_dir: /var/www
+        volumes:
+            - ./:/var/www
+            - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+        networks:
+            - shop-network
+
+    #Nginx service
+    web_service:
+        image: nginx:alpine
+        container_name: web_service
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "8000:8000"
+        volumes:
+            - ./:/var/www
+            - ./nginx/conf.d/:/etc/nginx/conf.d/
+        networks:
+            - shop-network
+    db:
+        image: mysql:8
+        platform: linux/amd64
+        container_name: db
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "${DB_PORT}:${DB_PORT}"
+        environment:
+            MYSQL_DATABASE: "${DB_DATABASE}"
+            MYSQL_USER: "${DB_USERNAME}"
+            MYSQL_PASSWORD: "${DB_PASSWORD}"
+            MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
+            SERVICE_TAGS: dev
+            SERVICE_NAME: mysql
+        volumes:
+            - ./dbdata:/var/lib/mysql
+            - ./mysql/my.cnf:/etc/mysql/my.cnf
+        networks:
+            - shop-network
+        env_file:
+            - .env
 #Networks
 networks:
-  shop-network:
-    driver: bridge
+    shop-network:
+        driver: bridge
 #Volumes
 #volumes:
 #  dbdata:
