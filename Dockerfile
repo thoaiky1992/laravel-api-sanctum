@@ -28,6 +28,9 @@ RUN apk add autoconf && pecl install -o -f redis \
     &&  rm -rf /tmp/pear \
     &&  docker-php-ext-enable redis && apk del autoconf
 
+# Install composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
 # Copy config
 # COPY ./config/php/local.ini /usr/local/etc/php/conf.d/local.ini
 
